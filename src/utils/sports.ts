@@ -25,5 +25,5 @@ export function getSport(key: string): Sport | undefined {
 }
 
 export function isThreeWaySport(sportKey: string): boolean {
-  return sportKey.startsWith('soccer_');
+  return sportKey.startsWith('soccer_') || sportKey === 'Futebol';
 }
