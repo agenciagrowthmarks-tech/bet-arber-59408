@@ -23,3 +23,7 @@ export function getSportIcon(key: string): string {
 export function getSport(key: string): Sport | undefined {
   return SPORTS.find(s => s.key === key);
 }
+
+export function isThreeWaySport(sportKey: string): boolean {
+  return sportKey.startsWith('soccer_');
+}

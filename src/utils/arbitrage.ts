@@ -19,6 +19,25 @@ export function computeArbitrage(oddA: number, oddB: number): ArbitrageCalc {
   };
 }
 
+export function computeArbitrageThreeWay(
+  homeOdd: number,
+  drawOdd: number,
+  awayOdd: number
+): ArbitrageCalc {
+  if (!homeOdd || !drawOdd || !awayOdd || homeOdd <= 1 || drawOdd <= 1 || awayOdd <= 1) {
+    return { hasArbitrage: false, arbIndex: 0, profitPercent: 0 };
+  }
+
+  const arbIndex = 1 / homeOdd + 1 / drawOdd + 1 / awayOdd;
+  const profitPercent = (1 - arbIndex) * 100;
+
+  return {
+    hasArbitrage: arbIndex < 1,
+    arbIndex,
+    profitPercent,
+  };
+}
+
 export type StakeSplit = {
   payout: number;
   stakeA: number;
@@ -43,6 +62,41 @@ export function computeStakeSplit(
     payout,
     stakeA,
     stakeB,
+    profit,
+    profitPercent,
+  };
+}
+
+export type StakeSplitThreeWay = {
+  payout: number;
+  stakeHome: number;
+  stakeDraw: number;
+  stakeAway: number;
+  profit: number;
+  profitPercent: number;
+};
+
+export function computeStakeSplitThreeWay(
+  total: number,
+  homeOdd: number,
+  drawOdd: number,
+  awayOdd: number
+): StakeSplitThreeWay {
+  const invSum = 1 / homeOdd + 1 / drawOdd + 1 / awayOdd;
+  const payout = total / invSum;
+
+  const stakeHome = payout / homeOdd;
+  const stakeDraw = payout / drawOdd;
+  const stakeAway = payout / awayOdd;
+
+  const profit = payout - total;
+  const profitPercent = (profit / total) * 100;
+
+  return {
+    payout,
+    stakeHome,
+    stakeDraw,
+    stakeAway,
     profit,
     profitPercent,
   };

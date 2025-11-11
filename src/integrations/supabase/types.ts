@@ -14,7 +14,157 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      arbitrage_log: {
+        Row: {
+          arb_index: number
+          away_team: string
+          bookmaker_a: string
+          bookmaker_b: string
+          detected_at: string
+          game_id: string
+          home_team: string
+          id: string
+          league: string
+          odd_a: number
+          odd_b: number
+          profit_percent: number
+          sport: string
+        }
+        Insert: {
+          arb_index: number
+          away_team: string
+          bookmaker_a: string
+          bookmaker_b: string
+          detected_at?: string
+          game_id: string
+          home_team: string
+          id?: string
+          league: string
+          odd_a: number
+          odd_b: number
+          profit_percent: number
+          sport: string
+        }
+        Update: {
+          arb_index?: number
+          away_team?: string
+          bookmaker_a?: string
+          bookmaker_b?: string
+          detected_at?: string
+          game_id?: string
+          home_team?: string
+          id?: string
+          league?: string
+          odd_a?: number
+          odd_b?: number
+          profit_percent?: number
+          sport?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arbitrage_log_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      games: {
+        Row: {
+          away_team: string
+          created_at: string
+          external_id: string
+          game_datetime: string | null
+          home_team: string
+          id: string
+          league: string
+          sport: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          away_team: string
+          created_at?: string
+          external_id: string
+          game_datetime?: string | null
+          home_team: string
+          id?: string
+          league: string
+          sport: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          away_team?: string
+          created_at?: string
+          external_id?: string
+          game_datetime?: string | null
+          home_team?: string
+          id?: string
+          league?: string
+          sport?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      odds: {
+        Row: {
+          away_odd: number
+          bookmaker: string
+          draw_odd: number | null
+          game_id: string
+          home_odd: number
+          id: string
+          last_update: string
+        }
+        Insert: {
+          away_odd: number
+          bookmaker: string
+          draw_odd?: number | null
+          game_id: string
+          home_odd: number
+          id?: string
+          last_update?: string
+        }
+        Update: {
+          away_odd?: number
+          bookmaker?: string
+          draw_odd?: number | null
+          game_id?: string
+          home_odd?: number
+          id?: string
+          last_update?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "odds_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sync_status: {
+        Row: {
+          id: number
+          last_run_at: string
+          sport_key: string
+        }
+        Insert: {
+          id?: number
+          last_run_at?: string
+          sport_key?: string
+        }
+        Update: {
+          id?: number
+          last_run_at?: string
+          sport_key?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

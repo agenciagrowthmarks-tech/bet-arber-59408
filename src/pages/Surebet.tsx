@@ -30,11 +30,16 @@ import {
 } from "@/components/ui/dialog";
 import { RefreshCw, TrendingUp } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { computeArbitrage, computeStakeSplit } from "@/utils/arbitrage";
+import { 
+  computeArbitrage, 
+  computeStakeSplit, 
+  computeArbitrageThreeWay, 
+  computeStakeSplitThreeWay 
+} from "@/utils/arbitrage";
 import BookmakerComparisonChart from "@/components/BookmakerComparisonChart";
 import SyncCountdown from "@/components/SyncCountdown";
 import SportSelector from "@/components/SportSelector";
-import { getSportName } from "@/utils/sports";
+import { getSportName, isThreeWaySport } from "@/utils/sports";
 import { syncOdds as apiSyncOdds, getSyncStatus, getGames } from "@/services/api";
 
 interface Game {
@@ -54,6 +59,7 @@ interface Odd {
   game_id: string;
   bookmaker: string;
   home_odd: number;
+  draw_odd?: number;
   away_odd: number;
   last_update: string;
 }
@@ -62,12 +68,17 @@ interface ArbitrageResult {
   hasArbitrage: boolean;
   profitPercent: number;
   arbIndex: number;
-  combo: "home_houseA_away_houseB" | "home_houseB_away_houseA" | null;
+  combo: "home_houseA_away_houseB" | "home_houseB_away_houseA" | "three_way" | null;
   oddA: number;
   oddB: number;
+  oddDraw?: number;
   bookmakersLabel: string;
   houseAKey: string;
   houseBKey: string;
+  isThreeWay?: boolean;
+  bestHomeOdd?: number;
+  bestDrawOdd?: number;
+  bestAwayOdd?: number;
 }
 
 export default function Index() {
@@ -150,6 +161,8 @@ export default function Index() {
   }, [games]);
 
   function calculateArbitrage(game: Game): ArbitrageResult {
+    const isThreeWay = isThreeWaySport(game.sport);
+    
     let houseA: Odd | undefined;
     let houseB: Odd | undefined;
 
@@ -181,9 +194,56 @@ export default function Index() {
         bookmakersLabel: "",
         houseAKey: "",
         houseBKey: "",
+        isThreeWay,
       };
     }
 
+    // Para esportes de 3 vias (futebol)
+    if (isThreeWay) {
+      // Pegar as melhores odds de cada resultado entre as duas casas
+      const bestHomeOdd = Math.max(houseA.home_odd, houseB.home_odd);
+      const bestDrawOdd = Math.max(houseA.draw_odd || 0, houseB.draw_odd || 0);
+      const bestAwayOdd = Math.max(houseA.away_odd, houseB.away_odd);
+
+      if (!bestDrawOdd) {
+        // Se não houver odds de empate, retornar sem arbitragem
+        return {
+          hasArbitrage: false,
+          profitPercent: 0,
+          arbIndex: 0,
+          combo: null,
+          oddA: 0,
+          oddB: 0,
+          bookmakersLabel: "",
+          houseAKey: houseA.bookmaker,
+          houseBKey: houseB.bookmaker,
+          isThreeWay: true,
+        };
+      }
+
+      const arbResult = computeArbitrageThreeWay(bestHomeOdd, bestDrawOdd, bestAwayOdd);
+
+      const homeHouse = houseA.home_odd >= houseB.home_odd ? houseA.bookmaker : houseB.bookmaker;
+      const drawHouse = (houseA.draw_odd || 0) >= (houseB.draw_odd || 0) ? houseA.bookmaker : houseB.bookmaker;
+      const awayHouse = houseA.away_odd >= houseB.away_odd ? houseA.bookmaker : houseB.bookmaker;
+
+      return {
+        ...arbResult,
+        combo: "three_way",
+        oddA: bestHomeOdd,
+        oddB: bestAwayOdd,
+        oddDraw: bestDrawOdd,
+        bookmakersLabel: `${game.home_team} (${homeHouse}) • Empate (${drawHouse}) • ${game.away_team} (${awayHouse})`,
+        houseAKey: houseA.bookmaker,
+        houseBKey: houseB.bookmaker,
+        isThreeWay: true,
+        bestHomeOdd,
+        bestDrawOdd,
+        bestAwayOdd,
+      };
+    }
+
+    // Para esportes de 2 vias (NBA, NFL, etc.)
     // Combo 1: Casa na houseA + Fora na houseB
     const combo1 = computeArbitrage(houseA.home_odd, houseB.away_odd);
 
@@ -200,6 +260,7 @@ export default function Index() {
         bookmakersLabel: `${game.home_team} na ${houseA.bookmaker} • ${game.away_team} na ${houseB.bookmaker}`,
         houseAKey: houseA.bookmaker,
         houseBKey: houseB.bookmaker,
+        isThreeWay: false,
       };
     } else {
       return {
@@ -210,6 +271,7 @@ export default function Index() {
         bookmakersLabel: `${game.home_team} na ${houseB.bookmaker} • ${game.away_team} na ${houseA.bookmaker}`,
         houseAKey: houseB.bookmaker,
         houseBKey: houseA.bookmaker,
+        isThreeWay: false,
       };
     }
   }
@@ -396,7 +458,7 @@ export default function Index() {
                           )[0];
                           return firstBookmaker || "Casa A";
                         })()}{" "}
-                        (casa / fora)
+                        {isThreeWaySport(selectedSport) ? "(casa / empate / fora)" : "(casa / fora)"}
                       </TableHead>
                       <TableHead className="text-right">
                         {(() => {
@@ -406,7 +468,7 @@ export default function Index() {
                           )[1];
                           return secondBookmaker || "Casa B";
                         })()}{" "}
-                        (casa / fora)
+                        {isThreeWaySport(selectedSport) ? "(casa / empate / fora)" : "(casa / fora)"}
                       </TableHead>
                       <TableHead>Arbitragem</TableHead>
                       <TableHead>Stake sugerida</TableHead>
@@ -446,29 +508,66 @@ export default function Index() {
 
                           <TableCell className="text-right tabular-nums">
                             {houseA ? (
-                              <span>
-                                <span
-                                  className={
-                                    houseB &&
-                                    houseA.home_odd > houseB.home_odd
-                                      ? "font-bold text-accent-neon"
-                                      : ""
-                                  }
-                                >
-                                  {houseA.home_odd.toFixed(2)}
+                              isThreeWaySport(game.sport) ? (
+                                <span>
+                                  <span
+                                    className={
+                                      houseB &&
+                                      houseA.home_odd > houseB.home_odd
+                                        ? "font-bold text-accent-neon"
+                                        : ""
+                                    }
+                                  >
+                                    {houseA.home_odd.toFixed(2)}
+                                  </span>
+                                  {" / "}
+                                  <span
+                                    className={
+                                      houseB &&
+                                      (houseA.draw_odd || 0) > (houseB.draw_odd || 0)
+                                        ? "font-bold text-accent-neon"
+                                        : ""
+                                    }
+                                  >
+                                    {houseA.draw_odd?.toFixed(2) || "—"}
+                                  </span>
+                                  {" / "}
+                                  <span
+                                    className={
+                                      houseB &&
+                                      houseA.away_odd > houseB.away_odd
+                                        ? "font-bold text-accent-neon"
+                                        : ""
+                                    }
+                                  >
+                                    {houseA.away_odd.toFixed(2)}
+                                  </span>
                                 </span>
-                                {" / "}
-                                <span
-                                  className={
-                                    houseB &&
-                                    houseA.away_odd > houseB.away_odd
-                                      ? "font-bold text-accent-neon"
-                                      : ""
-                                  }
-                                >
-                                  {houseA.away_odd.toFixed(2)}
+                              ) : (
+                                <span>
+                                  <span
+                                    className={
+                                      houseB &&
+                                      houseA.home_odd > houseB.home_odd
+                                        ? "font-bold text-accent-neon"
+                                        : ""
+                                    }
+                                  >
+                                    {houseA.home_odd.toFixed(2)}
+                                  </span>
+                                  {" / "}
+                                  <span
+                                    className={
+                                      houseB &&
+                                      houseA.away_odd > houseB.away_odd
+                                        ? "font-bold text-accent-neon"
+                                        : ""
+                                    }
+                                  >
+                                    {houseA.away_odd.toFixed(2)}
+                                  </span>
                                 </span>
-                              </span>
+                              )
                             ) : (
                               <span className="text-muted-foreground">—</span>
                             )}
@@ -476,29 +575,66 @@ export default function Index() {
 
                           <TableCell className="text-right tabular-nums">
                             {houseB ? (
-                              <span>
-                                <span
-                                  className={
-                                    houseA &&
-                                    houseB.home_odd > houseA.home_odd
-                                      ? "font-bold text-accent-neon"
-                                      : ""
-                                  }
-                                >
-                                  {houseB.home_odd.toFixed(2)}
+                              isThreeWaySport(game.sport) ? (
+                                <span>
+                                  <span
+                                    className={
+                                      houseA &&
+                                      houseB.home_odd > houseA.home_odd
+                                        ? "font-bold text-accent-neon"
+                                        : ""
+                                    }
+                                  >
+                                    {houseB.home_odd.toFixed(2)}
+                                  </span>
+                                  {" / "}
+                                  <span
+                                    className={
+                                      houseA &&
+                                      (houseB.draw_odd || 0) > (houseA.draw_odd || 0)
+                                        ? "font-bold text-accent-neon"
+                                        : ""
+                                    }
+                                  >
+                                    {houseB.draw_odd?.toFixed(2) || "—"}
+                                  </span>
+                                  {" / "}
+                                  <span
+                                    className={
+                                      houseA &&
+                                      houseB.away_odd > houseA.away_odd
+                                        ? "font-bold text-accent-neon"
+                                        : ""
+                                    }
+                                  >
+                                    {houseB.away_odd.toFixed(2)}
+                                  </span>
                                 </span>
-                                {" / "}
-                                <span
-                                  className={
-                                    houseA &&
-                                    houseB.away_odd > houseA.away_odd
-                                      ? "font-bold text-accent-neon"
-                                      : ""
-                                  }
-                                >
-                                  {houseB.away_odd.toFixed(2)}
+                              ) : (
+                                <span>
+                                  <span
+                                    className={
+                                      houseA &&
+                                      houseB.home_odd > houseA.home_odd
+                                        ? "font-bold text-accent-neon"
+                                        : ""
+                                    }
+                                  >
+                                    {houseB.home_odd.toFixed(2)}
+                                  </span>
+                                  {" / "}
+                                  <span
+                                    className={
+                                      houseA &&
+                                      houseB.away_odd > houseA.away_odd
+                                        ? "font-bold text-accent-neon"
+                                        : ""
+                                    }
+                                  >
+                                    {houseB.away_odd.toFixed(2)}
+                                  </span>
                                 </span>
-                              </span>
+                              )
                             ) : (
                               <span className="text-muted-foreground">—</span>
                             )}
@@ -520,23 +656,45 @@ export default function Index() {
                             {arb.hasArbitrage ? (
                               <div className="space-y-1 text-sm">
                                 {(() => {
-                                  const split = computeStakeSplit(
-                                    totalInvestment,
-                                    arb.oddA,
-                                    arb.oddB
-                                  );
-                                  return (
-                                    <>
-                                      <div className="text-muted-foreground">
-                                        {formatCurrency(split.stakeA)} •{" "}
-                                        {formatCurrency(split.stakeB)}
-                                      </div>
-                                      <div className="font-medium text-accent-neon">
-                                        Lucro: {formatCurrency(split.profit)} (
-                                        {split.profitPercent.toFixed(2)}%)
-                                      </div>
-                                    </>
-                                  );
+                                  if (arb.isThreeWay && arb.bestHomeOdd && arb.bestDrawOdd && arb.bestAwayOdd) {
+                                    const split = computeStakeSplitThreeWay(
+                                      totalInvestment,
+                                      arb.bestHomeOdd,
+                                      arb.bestDrawOdd,
+                                      arb.bestAwayOdd
+                                    );
+                                    return (
+                                      <>
+                                        <div className="text-muted-foreground">
+                                          {formatCurrency(split.stakeHome)} (casa) •{" "}
+                                          {formatCurrency(split.stakeDraw)} (empate) •{" "}
+                                          {formatCurrency(split.stakeAway)} (fora)
+                                        </div>
+                                        <div className="font-medium text-accent-neon">
+                                          Lucro: {formatCurrency(split.profit)} (
+                                          {split.profitPercent.toFixed(2)}%)
+                                        </div>
+                                      </>
+                                    );
+                                  } else {
+                                    const split = computeStakeSplit(
+                                      totalInvestment,
+                                      arb.oddA,
+                                      arb.oddB
+                                    );
+                                    return (
+                                      <>
+                                        <div className="text-muted-foreground">
+                                          {formatCurrency(split.stakeA)} •{" "}
+                                          {formatCurrency(split.stakeB)}
+                                        </div>
+                                        <div className="font-medium text-accent-neon">
+                                          Lucro: {formatCurrency(split.profit)} (
+                                          {split.profitPercent.toFixed(2)}%)
+                                        </div>
+                                      </>
+                                    );
+                                  }
                                 })()}
                               </div>
                             ) : (
@@ -583,8 +741,18 @@ export default function Index() {
                         {odd.bookmaker}
                       </span>
                       <span className="tabular-nums">
-                        Casa: {odd.home_odd.toFixed(2)} • Fora:{" "}
-                        {odd.away_odd.toFixed(2)}
+                        {isThreeWaySport(selectedGame.sport) ? (
+                          <>
+                            Casa: {odd.home_odd.toFixed(2)} • Empate:{" "}
+                            {odd.draw_odd?.toFixed(2) || "—"} • Fora:{" "}
+                            {odd.away_odd.toFixed(2)}
+                          </>
+                        ) : (
+                          <>
+                            Casa: {odd.home_odd.toFixed(2)} • Fora:{" "}
+                            {odd.away_odd.toFixed(2)}
+                          </>
+                        )}
                       </span>
                     </div>
                   ))}
@@ -608,6 +776,94 @@ export default function Index() {
                   );
                 }
 
+                if (arb.isThreeWay && arb.bestHomeOdd && arb.bestDrawOdd && arb.bestAwayOdd) {
+                  const split = computeStakeSplitThreeWay(
+                    totalInvestment,
+                    arb.bestHomeOdd,
+                    arb.bestDrawOdd,
+                    arb.bestAwayOdd
+                  );
+
+                  return (
+                    <div className="space-y-3">
+                      <h3 className="font-semibold text-accent-neon">
+                        ✓ Arbitragem encontrada!
+                      </h3>
+
+                      <div className="p-4 bg-accent-neon/10 border border-accent-neon/20 rounded-lg space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            Melhor combinação:
+                          </span>
+                          <span className="font-medium">
+                            {arb.bookmakersLabel}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            Índice de arbitragem:
+                          </span>
+                          <span className="font-mono">
+                            {arb.arbIndex.toFixed(4)}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            Lucro percentual:
+                          </span>
+                          <span className="font-bold text-accent-neon">
+                            +{arb.profitPercent.toFixed(2)}%
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-muted rounded-lg space-y-2">
+                        <h4 className="font-semibold">
+                          Distribuição de stakes (investimento:{" "}
+                          {formatCurrency(totalInvestment)})
+                        </h4>
+
+                        <div className="space-y-1">
+                          <div className="flex justify-between">
+                            <span>Apostar em casa ({arb.bestHomeOdd.toFixed(2)}):</span>
+                            <span className="font-bold">
+                              {formatCurrency(split.stakeHome)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Apostar em empate ({arb.bestDrawOdd.toFixed(2)}):</span>
+                            <span className="font-bold">
+                              {formatCurrency(split.stakeDraw)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Apostar em fora ({arb.bestAwayOdd.toFixed(2)}):</span>
+                            <span className="font-bold">
+                              {formatCurrency(split.stakeAway)}
+                            </span>
+                          </div>
+                          <div className="pt-2 border-t border-border flex justify-between">
+                            <span>Payout garantido:</span>
+                            <span className="font-bold">
+                              {formatCurrency(split.payout)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-accent-neon">
+                            <span className="font-semibold">Lucro garantido:</span>
+                            <span className="font-bold">
+                              {formatCurrency(split.profit)} (
+                              {split.profitPercent.toFixed(2)}%)
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Para esportes de 2 vias
                 const split = computeStakeSplit(
                   totalInvestment,
                   arb.oddA,

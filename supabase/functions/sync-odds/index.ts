@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
 
         // Salvar TODAS as casas de apostas com odds válidas
         const allBookmakers = event.bookmakers || [];
-        const savedOdds: Array<{ bookmaker: string; home_odd: number; away_odd: number }> = [];
+        const savedOdds: Array<{ bookmaker: string; home_odd: number; draw_odd?: number; away_odd: number }> = [];
 
         for (const bookmaker of allBookmakers) {
           const h2hMarket = bookmaker.markets?.find((m) => m.key === "h2h");
@@ -155,17 +155,27 @@ Deno.serve(async (req) => {
           const awayOutcome = h2hMarket.outcomes.find(
             (o) => o.name === event.away_team
           );
+          const drawOutcome = h2hMarket.outcomes.find(
+            (o) => o.name === "Draw"
+          );
 
           if (!homeOutcome || !awayOutcome) continue;
 
+          const oddsData: any = {
+            game_id: game.id,
+            bookmaker: bookmaker.key,
+            home_odd: homeOutcome.price,
+            away_odd: awayOutcome.price,
+            last_update: new Date().toISOString(),
+          };
+
+          // Adicionar draw_odd se existir (para esportes de 3 vias como futebol)
+          if (drawOutcome) {
+            oddsData.draw_odd = drawOutcome.price;
+          }
+
           const { error: oddsError } = await supabase.from("odds").upsert(
-            {
-              game_id: game.id,
-              bookmaker: bookmaker.key,
-              home_odd: homeOutcome.price,
-              away_odd: awayOutcome.price,
-              last_update: new Date().toISOString(),
-            },
+            oddsData,
             {
               onConflict: "game_id,bookmaker",
             }
@@ -178,6 +188,7 @@ Deno.serve(async (req) => {
             savedOdds.push({
               bookmaker: bookmaker.key,
               home_odd: homeOutcome.price,
+              draw_odd: drawOutcome?.price,
               away_odd: awayOutcome.price,
             });
           }
