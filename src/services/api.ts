@@ -35,7 +35,7 @@ export async function getSyncStatus(): Promise<SyncStatusResponse> {
   return data;
 }
 
-export async function getGames(sportKey?: string) {
+export async function getGames(sportKey?: string, league?: string) {
   let query = (supabase as any)
     .from('games')
     .select('*, odds(*)')
@@ -44,12 +44,16 @@ export async function getGames(sportKey?: string) {
   if (sportKey) {
     const sportName = 
       sportKey === 'basketball_nba' ? 'Basquete' :
-      sportKey === 'soccer_epl' ? 'Futebol' :
+      sportKey.startsWith('soccer_') ? 'Futebol' :
       sportKey === 'americanfootball_nfl' ? 'Futebol Americano' : null;
     
     if (sportName) {
       query = query.eq('sport', sportName);
     }
+  }
+
+  if (league && league !== 'all') {
+    query = query.eq('league', league);
   }
 
   const { data, error } = await query;

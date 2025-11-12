@@ -91,18 +91,19 @@ export default function Index() {
   const [selectedHouseA, setSelectedHouseA] = useState<string>("auto");
   const [selectedHouseB, setSelectedHouseB] = useState<string>("auto");
   const [selectedSport, setSelectedSport] = useState<string>("basketball_nba");
+  const [selectedLeague, setSelectedLeague] = useState<string>("all");
   const [lastRunAt, setLastRunAt] = useState<string | null>(null);
   const [showChart, setShowChart] = useState<boolean>(false);
 
   useEffect(() => {
     loadGames();
     loadSyncStatus();
-  }, [selectedSport]);
+  }, [selectedSport, selectedLeague]);
 
   async function loadGames() {
     try {
       setLoading(true);
-      const data = await getGames(selectedSport);
+      const data = await getGames(selectedSport, selectedLeague);
       setGames(data);
     } catch (error: any) {
       toast({
@@ -158,6 +159,15 @@ export default function Index() {
       });
     });
     return Array.from(bookmakers).sort();
+  }, [games]);
+
+  // Obter todas as ligas disponíveis nos jogos atuais
+  const availableLeagues = useMemo(() => {
+    const leagues = new Set<string>();
+    games.forEach((game) => {
+      leagues.add(game.league);
+    });
+    return Array.from(leagues).sort();
   }, [games]);
 
   function calculateArbitrage(game: Game): ArbitrageResult {
@@ -326,9 +336,34 @@ export default function Index() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <SportSelector
                 value={selectedSport}
-                onChange={setSelectedSport}
-                label="Esporte / Liga"
+                onChange={(value) => {
+                  setSelectedSport(value);
+                  setSelectedLeague("all");
+                }}
+                label="Esporte"
               />
+
+              {selectedSport.startsWith('soccer_') && (
+                <div className="space-y-2">
+                  <Label htmlFor="league-filter">Filtrar por Liga</Label>
+                  <Select
+                    value={selectedLeague}
+                    onValueChange={setSelectedLeague}
+                  >
+                    <SelectTrigger id="league-filter">
+                      <SelectValue placeholder="Todas as ligas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas as ligas</SelectItem>
+                      {availableLeagues.map((league) => (
+                        <SelectItem key={league} value={league}>
+                          {league}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="investment">Valor total para simulação (R$)</Label>
@@ -500,8 +535,11 @@ export default function Index() {
                               <div className="font-medium">
                                 {game.home_team} x {game.away_team}
                               </div>
-                              <div className="text-sm text-muted-foreground">
-                                {formatDateTime(game.game_datetime)}
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <span>{formatDateTime(game.game_datetime)}</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {game.league}
+                                </Badge>
                               </div>
                             </div>
                           </TableCell>
