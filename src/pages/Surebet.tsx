@@ -511,34 +511,34 @@ export default function Index() {
                               isThreeWaySport(game.sport) ? (
                                 <span className="space-x-1">
                                   <span
-                                    className={
+                                    className={`transition-all duration-500 ease-out inline-block ${
                                       houseB &&
                                       houseA.home_odd > houseB.home_odd
-                                        ? "font-bold bg-success/20 text-success px-2 py-1 rounded"
+                                        ? "font-bold bg-success/20 text-success px-2 py-1 rounded animate-pulse-once"
                                         : ""
-                                    }
+                                    }`}
                                   >
                                     {houseA.home_odd.toFixed(2)}
                                   </span>
                                   <span className="text-muted-foreground">/</span>
                                   <span
-                                    className={
+                                    className={`transition-all duration-500 ease-out inline-block ${
                                       houseB &&
                                       (houseA.draw_odd || 0) > (houseB.draw_odd || 0)
-                                        ? "font-bold bg-warning/20 text-warning px-2 py-1 rounded"
+                                        ? "font-bold bg-warning/20 text-warning px-2 py-1 rounded animate-pulse-once"
                                         : ""
-                                    }
+                                    }`}
                                   >
                                     {houseA.draw_odd?.toFixed(2) || "—"}
                                   </span>
                                   <span className="text-muted-foreground">/</span>
                                   <span
-                                    className={
+                                    className={`transition-all duration-500 ease-out inline-block ${
                                       houseB &&
                                       houseA.away_odd > houseB.away_odd
-                                        ? "font-bold bg-destructive/20 text-destructive px-2 py-1 rounded"
+                                        ? "font-bold bg-destructive/20 text-destructive px-2 py-1 rounded animate-pulse-once"
                                         : ""
-                                    }
+                                    }`}
                                   >
                                     {houseA.away_odd.toFixed(2)}
                                   </span>
@@ -546,23 +546,23 @@ export default function Index() {
                               ) : (
                                 <span className="space-x-1">
                                   <span
-                                    className={
+                                    className={`transition-all duration-500 ease-out inline-block ${
                                       houseB &&
                                       houseA.home_odd > houseB.home_odd
-                                        ? "font-bold bg-success/20 text-success px-2 py-1 rounded"
+                                        ? "font-bold bg-success/20 text-success px-2 py-1 rounded animate-pulse-once"
                                         : ""
-                                    }
+                                    }`}
                                   >
                                     {houseA.home_odd.toFixed(2)}
                                   </span>
                                   <span className="text-muted-foreground">/</span>
                                   <span
-                                    className={
+                                    className={`transition-all duration-500 ease-out inline-block ${
                                       houseB &&
                                       houseA.away_odd > houseB.away_odd
-                                        ? "font-bold bg-destructive/20 text-destructive px-2 py-1 rounded"
+                                        ? "font-bold bg-destructive/20 text-destructive px-2 py-1 rounded animate-pulse-once"
                                         : ""
-                                    }
+                                    }`}
                                   >
                                     {houseA.away_odd.toFixed(2)}
                                   </span>
@@ -578,34 +578,34 @@ export default function Index() {
                               isThreeWaySport(game.sport) ? (
                                 <span className="space-x-1">
                                   <span
-                                    className={
+                                    className={`transition-all duration-500 ease-out inline-block ${
                                       houseA &&
                                       houseB.home_odd > houseA.home_odd
-                                        ? "font-bold bg-success/20 text-success px-2 py-1 rounded"
+                                        ? "font-bold bg-success/20 text-success px-2 py-1 rounded animate-pulse-once"
                                         : ""
-                                    }
+                                    }`}
                                   >
                                     {houseB.home_odd.toFixed(2)}
                                   </span>
                                   <span className="text-muted-foreground">/</span>
                                   <span
-                                    className={
+                                    className={`transition-all duration-500 ease-out inline-block ${
                                       houseA &&
                                       (houseB.draw_odd || 0) > (houseA.draw_odd || 0)
-                                        ? "font-bold bg-warning/20 text-warning px-2 py-1 rounded"
+                                        ? "font-bold bg-warning/20 text-warning px-2 py-1 rounded animate-pulse-once"
                                         : ""
-                                    }
+                                    }`}
                                   >
                                     {houseB.draw_odd?.toFixed(2) || "—"}
                                   </span>
                                   <span className="text-muted-foreground">/</span>
                                   <span
-                                    className={
+                                    className={`transition-all duration-500 ease-out inline-block ${
                                       houseA &&
                                       houseB.away_odd > houseA.away_odd
-                                        ? "font-bold bg-destructive/20 text-destructive px-2 py-1 rounded"
+                                        ? "font-bold bg-destructive/20 text-destructive px-2 py-1 rounded animate-pulse-once"
                                         : ""
-                                    }
+                                    }`}
                                   >
                                     {houseB.away_odd.toFixed(2)}
                                   </span>
@@ -613,23 +613,23 @@ export default function Index() {
                               ) : (
                                 <span className="space-x-1">
                                   <span
-                                    className={
+                                    className={`transition-all duration-500 ease-out inline-block ${
                                       houseA &&
                                       houseB.home_odd > houseA.home_odd
-                                        ? "font-bold bg-success/20 text-success px-2 py-1 rounded"
+                                        ? "font-bold bg-success/20 text-success px-2 py-1 rounded animate-pulse-once"
                                         : ""
-                                    }
+                                    }`}
                                   >
                                     {houseB.home_odd.toFixed(2)}
                                   </span>
                                   <span className="text-muted-foreground">/</span>
                                   <span
-                                    className={
+                                    className={`transition-all duration-500 ease-out inline-block ${
                                       houseA &&
                                       houseB.away_odd > houseA.away_odd
-                                        ? "font-bold bg-destructive/20 text-destructive px-2 py-1 rounded"
+                                        ? "font-bold bg-destructive/20 text-destructive px-2 py-1 rounded animate-pulse-once"
                                         : ""
-                                    }
+                                    }`}
                                   >
                                     {houseB.away_odd.toFixed(2)}
                                   </span>
