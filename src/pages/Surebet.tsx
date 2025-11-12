@@ -509,34 +509,34 @@ export default function Index() {
                           <TableCell className="text-right tabular-nums">
                             {houseA ? (
                               isThreeWaySport(game.sport) ? (
-                                <span>
+                                <span className="space-x-1">
                                   <span
                                     className={
                                       houseB &&
                                       houseA.home_odd > houseB.home_odd
-                                        ? "font-bold text-accent-neon"
+                                        ? "font-bold bg-success/20 text-success px-2 py-1 rounded"
                                         : ""
                                     }
                                   >
                                     {houseA.home_odd.toFixed(2)}
                                   </span>
-                                  {" / "}
+                                  <span className="text-muted-foreground">/</span>
                                   <span
                                     className={
                                       houseB &&
                                       (houseA.draw_odd || 0) > (houseB.draw_odd || 0)
-                                        ? "font-bold text-accent-neon"
+                                        ? "font-bold bg-warning/20 text-warning px-2 py-1 rounded"
                                         : ""
                                     }
                                   >
                                     {houseA.draw_odd?.toFixed(2) || "—"}
                                   </span>
-                                  {" / "}
+                                  <span className="text-muted-foreground">/</span>
                                   <span
                                     className={
                                       houseB &&
                                       houseA.away_odd > houseB.away_odd
-                                        ? "font-bold text-accent-neon"
+                                        ? "font-bold bg-destructive/20 text-destructive px-2 py-1 rounded"
                                         : ""
                                     }
                                   >
@@ -544,23 +544,23 @@ export default function Index() {
                                   </span>
                                 </span>
                               ) : (
-                                <span>
+                                <span className="space-x-1">
                                   <span
                                     className={
                                       houseB &&
                                       houseA.home_odd > houseB.home_odd
-                                        ? "font-bold text-accent-neon"
+                                        ? "font-bold bg-success/20 text-success px-2 py-1 rounded"
                                         : ""
                                     }
                                   >
                                     {houseA.home_odd.toFixed(2)}
                                   </span>
-                                  {" / "}
+                                  <span className="text-muted-foreground">/</span>
                                   <span
                                     className={
                                       houseB &&
                                       houseA.away_odd > houseB.away_odd
-                                        ? "font-bold text-accent-neon"
+                                        ? "font-bold bg-destructive/20 text-destructive px-2 py-1 rounded"
                                         : ""
                                     }
                                   >
@@ -576,34 +576,34 @@ export default function Index() {
                           <TableCell className="text-right tabular-nums">
                             {houseB ? (
                               isThreeWaySport(game.sport) ? (
-                                <span>
+                                <span className="space-x-1">
                                   <span
                                     className={
                                       houseA &&
                                       houseB.home_odd > houseA.home_odd
-                                        ? "font-bold text-accent-neon"
+                                        ? "font-bold bg-success/20 text-success px-2 py-1 rounded"
                                         : ""
                                     }
                                   >
                                     {houseB.home_odd.toFixed(2)}
                                   </span>
-                                  {" / "}
+                                  <span className="text-muted-foreground">/</span>
                                   <span
                                     className={
                                       houseA &&
                                       (houseB.draw_odd || 0) > (houseA.draw_odd || 0)
-                                        ? "font-bold text-accent-neon"
+                                        ? "font-bold bg-warning/20 text-warning px-2 py-1 rounded"
                                         : ""
                                     }
                                   >
                                     {houseB.draw_odd?.toFixed(2) || "—"}
                                   </span>
-                                  {" / "}
+                                  <span className="text-muted-foreground">/</span>
                                   <span
                                     className={
                                       houseA &&
                                       houseB.away_odd > houseA.away_odd
-                                        ? "font-bold text-accent-neon"
+                                        ? "font-bold bg-destructive/20 text-destructive px-2 py-1 rounded"
                                         : ""
                                     }
                                   >
@@ -611,23 +611,23 @@ export default function Index() {
                                   </span>
                                 </span>
                               ) : (
-                                <span>
+                                <span className="space-x-1">
                                   <span
                                     className={
                                       houseA &&
                                       houseB.home_odd > houseA.home_odd
-                                        ? "font-bold text-accent-neon"
+                                        ? "font-bold bg-success/20 text-success px-2 py-1 rounded"
                                         : ""
                                     }
                                   >
                                     {houseB.home_odd.toFixed(2)}
                                   </span>
-                                  {" / "}
+                                  <span className="text-muted-foreground">/</span>
                                   <span
                                     className={
                                       houseA &&
                                       houseB.away_odd > houseA.away_odd
-                                        ? "font-bold text-accent-neon"
+                                        ? "font-bold bg-destructive/20 text-destructive px-2 py-1 rounded"
                                         : ""
                                     }
                                   >
